@@ -1,0 +1,25 @@
+# Example: copy to .github/workflows/solana-upgrade-check.yml in your repository.
+# Pin to a release tag or commit SHA; a vendored local path such as
+# ./tools/solana-upgrade-check also works.
+name: solana-upgrade-check
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1" # weekly: new feature gates / SDK releases land between your commits
+
+permissions:
+  contents: read
+  security-events: write # for SARIF upload to code scanning
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: norwavestudio-art/solana-upgrade-check@v0.1.0
+        with:
+          path: .
+          fail-on: error # package.json rules are errors; code rules are warnings
+          upload-sarif: "true"

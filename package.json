@@ -1,0 +1,40 @@
+{
+  "name": "solana-upgrade-check",
+  "version": "0.1.0",
+  "description": "ESLint plugin + CLI that flags client code broken or made stale by the 2026 Solana protocol upgrades (Transaction v1, rent reduction, shorter slots, SNS .sol -> .sns).",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "solana-upgrade-check": "./dist/cli.js"
+  },
+  "files": ["dist", "README.md", "LICENSE", "NOTICE"],
+  "engines": { "node": ">=20.19" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test \"test/**/*.test.mjs\"",
+    "scan": "node dist/cli.js scan"
+  },
+  "keywords": ["solana", "eslint", "eslintplugin", "lint", "transaction-v1", "sns", "rent", "simd"],
+  "peerDependencies": {
+    "eslint": "^9.0.0 || ^10.0.0"
+  },
+  "dependencies": {
+    "@typescript-eslint/parser": "8.71.1",
+    "jsonc-eslint-parser": "3.3.0",
+    "semver": "7.8.5"
+  },
+  "devDependencies": {
+    "@types/estree": "1.0.9",
+    "@types/node": "22.20.5",
+    "@types/semver": "7.8.0",
+    "eslint": "10.12.0",
+    "typescript": "6.0.3"
+  }
+}

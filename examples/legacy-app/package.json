@@ -1,0 +1,8 @@
+{
+  "name": "legacy-app",
+  "private": true,
+  "dependencies": {
+    "@solana/web3.js": "^1.95.4",
+    "@bonfida/spl-name-service": "^3.0.10"
+  }
+}
