@@ -18,7 +18,7 @@
   "engines": { "node": ">=20.19" },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test \"test/**/*.test.mjs\"",
+    "test": "npm run build && node --test test/*.test.mjs",
     "scan": "node dist/cli.js scan"
   },
   "keywords": ["solana", "eslint", "eslintplugin", "lint", "transaction-v1", "sns", "rent", "simd"],
