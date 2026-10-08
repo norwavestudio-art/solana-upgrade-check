@@ -1,0 +1,39 @@
+# Fetching a block on Solana
+
+<CodeTabs>
+
+```ts title="kit.ts"
+import { createSolanaRpc } from "@solana/kit";
+
+const rpc = createSolanaRpc("https://api.devnet.solana.com");
+const block = await rpc
+  .getBlock(slot, { maxSupportedTransactionVersion: 0 })
+  .send();
+```
+
+```js
+// no import in this snippet; the page is about Solana
+const tx = await connection.getTransaction(signature);
+```
+
+</CodeTabs>
+
+```bash
+curl https://api.devnet.solana.com -s -X POST -H "Content-Type: application/json" -d '
+  {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "getBlock",
+    "params": [430, { "encoding": "json", "maxSupportedTransactionVersion": 0 }]
+  }
+'
+```
+
+```json
+{ "jsonrpc": "2.0", "id": 1, "method": "getTransaction", "params": ["sig", { "maxSupportedTransactionVersion": 1 }] }
+```
+
+```ts
+// a partial snippet that does not parse
+const x = {
+```

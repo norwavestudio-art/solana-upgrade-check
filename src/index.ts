@@ -11,6 +11,7 @@ import noLegacySnsApi from "./rules/no-legacy-sns-api.js";
 import noClosedRewardType from "./rules/no-closed-reward-type.js";
 import minV1SdkVersion from "./rules/min-v1-sdk-version.js";
 import minSnsSdkVersion from "./rules/min-sns-sdk-version.js";
+import { createMarkdownProcessor } from "./markdown.js";
 
 export const PLUGIN_NAME = "solana-upgrade";
 
@@ -32,10 +33,12 @@ const PKG_RULES = Object.keys(rules).filter((r) => r.startsWith("min-"));
 
 export const CODE_FILES = ["**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"];
 export const PKG_FILES = ["**/package.json"];
+export const DOC_FILES = ["**/*.{md,mdx}"];
 
 const plugin: ESLint.Plugin & { configs: Record<string, Linter.Config[]> } = {
   meta: { name: "eslint-plugin-solana-upgrade", version: "0.1.0" },
   rules: rules as any,
+  processors: { markdown: createMarkdownProcessor() },
   configs: {},
 };
 
@@ -60,6 +63,19 @@ plugin.configs.recommended = [
     plugins: { [PLUGIN_NAME]: plugin },
     languageOptions: { parser: jsoncParser as any },
     rules: level(PKG_RULES, "error"),
+  },
+];
+
+/**
+ * Flat config for code blocks in Markdown / MDX docs (JS/TS, JSON and curl JSON-RPC bodies).
+ * Add it after `recommended`; the blocks are linted with the `recommended` code rules.
+ */
+plugin.configs.markdown = [
+  {
+    name: "solana-upgrade/markdown",
+    files: DOC_FILES,
+    plugins: { [PLUGIN_NAME]: plugin },
+    processor: `${PLUGIN_NAME}/markdown`,
   },
 ];
 

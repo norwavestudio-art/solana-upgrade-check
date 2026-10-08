@@ -1,5 +1,6 @@
 import type { Rule } from "eslint";
 import { SOURCES, type SourceKey } from "./sources.js";
+import { SOLANA_CONTEXT_MARKER } from "./markdown.js";
 
 export type RuleModule = Rule.RuleModule;
 export type Node = any;
@@ -11,9 +12,13 @@ export function docs(description: string, source: SourceKey, recommended = true)
 const SOLANA_IMPORT_RE =
   /(?:from\s*|require\(\s*|import\(\s*|import\s+)["'](?:@solana\/|@solana-program\/|@coral-xyz\/anchor|@project-serum\/anchor|@bonfida\/|@solana-name-service\/|@metaplex-foundation\/|@triton-one\/)/;
 
-/** True when the file imports a Solana SDK package (cheap text check). */
+/**
+ * True when the file imports a Solana SDK package (cheap text check),
+ * or is a code block from a Markdown document about Solana.
+ */
 export function isSolanaFile(context: Rule.RuleContext): boolean {
-  return SOLANA_IMPORT_RE.test(context.sourceCode.text);
+  const text = context.sourceCode.text;
+  return SOLANA_IMPORT_RE.test(text) || text.includes(SOLANA_CONTEXT_MARKER);
 }
 
 const SNS_IMPORT_RE =

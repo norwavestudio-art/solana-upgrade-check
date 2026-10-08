@@ -3,7 +3,7 @@ import { ESLint, type Linter } from "eslint";
 import { existsSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import plugin, { CODE_FILES, PKG_FILES, PLUGIN_NAME } from "./index.js";
+import plugin, { CODE_FILES, DOC_FILES, PKG_FILES, PLUGIN_NAME } from "./index.js";
 import { toSarif } from "./sarif.js";
 import { decodeFeatureAccount, epochOfSlot, FEATURE_GATES, firstSlotOfEpoch, type EpochSchedule } from "./features.js";
 import { VERIFIED_ON } from "./sources.js";
@@ -58,9 +58,12 @@ const HELP = `solana-upgrade-check ${VERSION}
 Usage:
   solana-upgrade-check scan <path> [--format text|json|sarif] [--output <file>]
                                    [--fix] [--fail-on error|warning|none] [--ignore <glob>]...
-                                   [--include-tests]
+                                   [--include-tests] [--no-docs]
   solana-upgrade-check status [--rpc <url> | --cluster mainnet|devnet|testnet] [--json]
   solana-upgrade-check rules
+
+scan also checks code blocks in .md / .mdx files (JS/TS, JSON and curl JSON-RPC
+bodies); --no-docs turns that off.
 
 Rules and their primary sources were verified on ${VERIFIED_ON}.
 `;
@@ -103,7 +106,7 @@ export interface Finding {
 
 export async function scan(
   target: string,
-  opts: { fix?: boolean; ignore?: string[]; includeTests?: boolean } = {},
+  opts: { fix?: boolean; ignore?: string[]; includeTests?: boolean; docs?: boolean } = {},
 ): Promise<{ findings: Finding[]; filesScanned: number; parseErrors: { file: string; message: string }[] }> {
   const root = path.resolve(target);
   const isFile = statSync(root).isFile();
@@ -111,6 +114,7 @@ export async function scan(
   const config: Linter.Config[] = [
     { ignores: [...DEFAULT_IGNORES, ...(opts.includeTests ? [] : TEST_IGNORES), ...(opts.ignore ?? [])] },
     ...plugin.configs.recommended,
+    ...(opts.docs === false ? [] : plugin.configs.markdown),
   ];
   const eslint = new ESLint({
     cwd,
@@ -120,7 +124,7 @@ export async function scan(
     errorOnUnmatchedPattern: false,
     warnIgnored: false,
   });
-  const results = await eslint.lintFiles(isFile ? [root] : [...CODE_FILES, ...PKG_FILES]);
+  const results = await eslint.lintFiles(isFile ? [root] : [...CODE_FILES, ...PKG_FILES, ...(opts.docs === false ? [] : DOC_FILES)]);
   if (opts.fix) await ESLint.outputFixes(results);
   const findings: Finding[] = [];
   const parseErrors: { file: string; message: string }[] = [];
@@ -255,6 +259,7 @@ async function main(argv: string[]) {
     const { findings, filesScanned, parseErrors } = await scan(target, {
       fix: args.fix === true,
       includeTests: args["include-tests"] === true,
+      docs: args["no-docs"] !== true,
       ignore: (args.ignore as string[]) ?? [],
     });
     const format = String(args.format ?? "text");

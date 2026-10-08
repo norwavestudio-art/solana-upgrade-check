@@ -48,6 +48,7 @@ import solanaUpgrade from "solana-upgrade-check";
 
 export default [
   ...solanaUpgrade.configs.recommended, // TS/JS rules = warn, package.json rules = error
+  ...solanaUpgrade.configs.markdown,    // optional: code blocks in .md / .mdx docs
   // or pick rules yourself:
   // { plugins: { "solana-upgrade": solanaUpgrade },
   //   rules: { "solana-upgrade/require-max-supported-transaction-version": "error" } },
@@ -61,12 +62,14 @@ export default [
 ```bash
 solana-upgrade-check scan <path> [--format text|json|sarif] [--output file] [--fix]
                                  [--fail-on error|warning|none] [--ignore <glob>] [--include-tests]
+                                 [--no-docs]
 solana-upgrade-check status [--cluster mainnet|devnet|testnet | --rpc <url>] [--json]
 solana-upgrade-check rules
 ```
 
 - `scan` does not need an ESLint config in the target repo: it runs the plugin with its own config. It skips `node_modules`, build output, tests, mocks, fixtures and stories by default; pass `--include-tests` to scan them too. The exit code is 1 when there are findings at or above `--fail-on`.
 - `--fix` applies only the safe autofixes listed below and writes them to disk.
+- `scan` also checks code blocks in `.md` / `.mdx` files: fenced JS/TS blocks get the code rules, and fenced JSON blocks plus JSON-RPC bodies in `curl -d '...'` commands get `require-max-supported-transaction-version`. Findings and `--fix` point at the document itself. Snippets that do not parse are skipped. In a document that mentions Solana, snippets without an import are treated as Solana code. `--no-docs` turns this off.
 - `status` reads the feature-gate accounts with one `getMultipleAccounts` call, plus `getEpochSchedule` and `getEpochInfo`, against any JSON-RPC endpoint. The default is the public mainnet endpoint. Example output from 2026-10-08:
 
 ```
@@ -128,6 +131,8 @@ Legend: **autofix** = safe fix applied by `--fix` / `eslint --fix`; **suggestion
 
 On 2026-10-08 the CLI was run against 10 widely used public Solana repositories (SDKs, examples, wallet and DeFi clients) at pinned commits, without installing or running their code. Default mode (tests, mocks and fixtures excluded) produced 29 findings; manual review found no false positives among them. Most are `maxSupportedTransactionVersion: 0` lookups on arbitrary signatures and `package.json` ranges whose floor predates v1 support. The Solana Explorer, which already handles v1, came back clean, which makes it a useful negative control. Two rule bugs found by this run were fixed, with regression tests.
 
+Docs mode was checked on the English solana.com docs and cookbook (520 files) at the commit before [solana-com#2292](https://github.com/solana-foundation/solana-com/pull/2292): 15 findings, all real on manual review. 14 are `maxSupportedTransactionVersion` findings. The PR had fixed 13 of them by hand; the 14th, a Kit `getTransaction` example with no config at all, was found by this mode and added to the PR. The 15th is a hard-coded rent-exempt amount for a mint account in an example. The tool does not read the Rust examples, which the PR also fixed.
+
 The per-finding report is not published. The affected projects will be notified through their normal issue/PR process first.
 
 ## Limitations
@@ -135,7 +140,7 @@ The per-finding report is not published. The affected projects will be notified 
 - Purely syntactic, file-local analysis: no type information and no cross-file data flow. A config object built elsewhere, or a v1 branch in another module, is invisible to the rule. Rules stay silent when they cannot see the value, to keep false positives low.
 - Version rules read `package.json` ranges (their floor), not lockfiles.
 - Name-based heuristics (slot time, blockhash TTL, domain-like names) can miss renamed code and can occasionally fire on unrelated code that uses the same names.
-- TS/JS only. Python (`solders`, ≥ 0.29.0), Rust (`solana-*` 4.2.x) and Go (`solana-go` 1.23.0) minimums are documented by solana.com but not checked yet.
+- TS/JS and JSON only, in source files and in Markdown/MDX code blocks. Rust code blocks in docs are not checked. Python (`solders`, ≥ 0.29.0), Rust (`solana-*` 4.2.x) and Go (`solana-go` 1.23.0) minimums are documented by solana.com but not checked yet.
 - `status` relies on whichever RPC you point it at. Public endpoints are rate-limited.
 
 ## Relationship to other tools
