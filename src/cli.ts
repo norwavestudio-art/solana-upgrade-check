@@ -29,6 +29,9 @@ const CLUSTERS: Record<string, string> = {
 export const TEST_IGNORES = [
   "**/__tests__/**",
   "**/__mocks__/**",
+  "**/__typetests__/**",
+  "**/*.typetest.*",
+  "**/*-typetest.*",
   "**/mocks/**",
   "**/fixtures/**",
   "**/test/**",
@@ -51,6 +54,8 @@ export const DEFAULT_IGNORES = [
   "**/vendor/**",
   "**/*.min.js",
   "**/*.bundle.js",
+  // Changelogs quote old APIs on purpose.
+  "**/CHANGELOG.md",
 ];
 
 const HELP = `solana-upgrade-check ${VERSION}
@@ -298,10 +303,13 @@ const invokedDirectly = (() => {
 })();
 if (invokedDirectly) {
   main(process.argv.slice(2)).then(
-    (code) => process.exit(code),
+    // exitCode, not exit(): exit() drops stdout that is still buffered for a pipe (> 64 KB reports).
+    (code) => {
+      process.exitCode = code;
+    },
     (err) => {
       console.error(err instanceof Error ? err.message : err);
-      process.exit(2);
+      process.exitCode = 2;
     },
   );
 }

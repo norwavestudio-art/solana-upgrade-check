@@ -26,6 +26,15 @@ const METHODS: Record<string, number> = {
 /** Raw JSON-RPC method names: config is params[1]. */
 const RAW_METHODS = new Set(["getBlock", "getTransaction", "blockSubscribe"]);
 
+/** Metaplex Umi's RpcInterface sets maxSupportedTransactionVersion itself (umi-rpc-web3js). */
+const UMI_IMPORT_RE = /["']@metaplex-foundation\/umi[\w-]*["']/;
+
+function isUmiRpc(callee: Node, sourceText: string): boolean {
+  const obj = callee.object;
+  if (obj?.type !== "MemberExpression" || propName(obj) !== "rpc") return false;
+  return (obj.object.type === "Identifier" && obj.object.name === "umi") || UMI_IMPORT_RE.test(sourceText);
+}
+
 /** transactionDetails values for which Agave does not version-check (signatures / none). */
 const UNCHECKED_DETAILS = new Set(["signatures", "none"]);
 
@@ -157,6 +166,7 @@ const rule: Rule.RuleModule = {
         const name = propName(callee);
         if (!name || !Object.hasOwn(METHODS, name)) return;
         if (requireImport && !isSolanaFile(context)) return;
+        if (isUmiRpc(callee, sourceCode.text)) return;
         const idx = METHODS[name];
         if (node.arguments.length < idx) return; // not our signature
         if (node.arguments.some((a: Node) => a.type === "SpreadElement")) return;

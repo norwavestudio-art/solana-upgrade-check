@@ -17,10 +17,19 @@ tsTester.run(name, rule(name), {
     // raw JSON-RPC done right
     `fetch(url, { body: JSON.stringify({ method: "getBlock", params: [1, { maxSupportedTransactionVersion: 1 }] }) });`,
     W3 + `conn.getSignaturesForAddress(addr);`,
+    // Metaplex Umi sets maxSupportedTransactionVersion inside its RpcInterface
+    W3 + `await umi.rpc.getTransaction(signature);`,
+    `import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";\nawait ctx.rpc.getTransaction(sig, { commitment: "confirmed" });`,
     // regression: Object.prototype members must not be treated as RPC methods
     W3 + `const s = x.toString(); const h = y.hasOwnProperty("a"); const c = z.constructor(1);`,
   ],
   invalid: [
+    {
+      // a Kit client's `.rpc` is not Umi's
+      code: `import { createSolanaRpc } from "@solana/kit";\nawait client.rpc.getTransaction(sig, { maxSupportedTransactionVersion: 0 }).send();`,
+      output: `import { createSolanaRpc } from "@solana/kit";\nawait client.rpc.getTransaction(sig, { maxSupportedTransactionVersion: 1 }).send();`,
+      errors: [{ messageId: "tooLow" }],
+    },
     {
       code: W3 + `conn.getTransaction(sig, { maxSupportedTransactionVersion: 0 });`,
       output: W3 + `conn.getTransaction(sig, { maxSupportedTransactionVersion: 1 });`,
