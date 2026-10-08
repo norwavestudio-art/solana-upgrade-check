@@ -126,14 +126,9 @@ Legend: **autofix** = safe fix applied by `--fix` / `eslint --fix`; **suggestion
 
 ## Results on public repositories
 
-See [`reports/2026-10-08-public-repos-scan.md`](reports/2026-10-08-public-repos-scan.md). In short: 10 repos were scanned at pinned commits, giving 29 findings in non-test code and 130 with tests included. Highlights:
+On 2026-10-08 the CLI was run against 10 widely used public Solana repositories (SDKs, examples, wallet and DeFi clients) at pinned commits, without installing or running their code. Default mode (tests, mocks and fixtures excluded) produced 29 findings; manual review found no false positives among them. Most are `maxSupportedTransactionVersion: 0` lookups on arbitrary signatures and `package.json` ranges whose floor predates v1 support. The Solana Explorer, which already handles v1, came back clean, which makes it a useful negative control. Two rule bugs found by this run were fixed, with regression tests.
 
-- A `maxSupportedTransactionVersion: 0` lookup in the Solana Pay point-of-sale example, inside a `Promise.all` over incoming payments.
-- The same setting in `@solana-developers/helpers` `getLogs` / IDL event parsing.
-- `.sol` literals in the SNS cookbook example.
-- Pinned web3.js 1.98 and yellowstone-grpc 5.x in the Drift SDK.
-
-The Solana Explorer, which already handles v1, came back clean: a useful negative control. Two rule bugs found by this run were fixed before publication of the report, with regression tests. Nothing was filed upstream.
+The per-finding report is not published. The affected projects will be notified through their normal issue/PR process first.
 
 ## Limitations
 
